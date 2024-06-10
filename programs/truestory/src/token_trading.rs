@@ -12,6 +12,8 @@ pub struct BuyTokens {
     pub mint: Account<'info, Mint>,
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
+    #[account(mut)]
+    pub meme_token_state: Account<'info, MemeTokenState>,
 }
 
 pub fn buy_tokens(ctx: Context<BuyTokens>, amount: u64) -> Result<()> {
@@ -37,6 +39,9 @@ pub fn buy_tokens(ctx: Context<BuyTokens>, amount: u64) -> Result<()> {
     let mint_cpi_ctx = CpiContext::new_with_signer(mint_cpi_program, mint_cpi_accounts, signer);
     token::mint_to(mint_cpi_ctx, amount)?;
 
+    // Update circulating supply
+    ctx.accounts.meme_token_state.circulating_supply += amount;
+
     Ok(())
 }
 
@@ -51,6 +56,8 @@ pub struct SellTokens {
     pub mint: Account<'info, Mint>,
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
+    #[account(mut)]
+    pub meme_token_state: Account<'info, MemeTokenState>,
 }
 
 pub fn sell_tokens(ctx: Context<SellTokens>, amount: u64) -> Result<()> {
@@ -78,6 +85,9 @@ pub fn sell_tokens(ctx: Context<SellTokens>, amount: u64) -> Result<()> {
     let cpi_program = ctx.accounts.system_program.to_account_info();
     let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer);
     anchor_spl::token::transfer(cpi_ctx, amount)?;
+
+    // Update circulating supply
+    ctx.accounts.meme_token_state.circulating_supply -= amount;
 
     Ok(())
 }

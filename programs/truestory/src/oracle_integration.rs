@@ -13,6 +13,12 @@ pub fn update_oracle(ctx: Context<OracleIntegration>, new_price: u64) -> Result<
     let oracle = &mut ctx.accounts.oracle;
     oracle.price = new_price;
 
+    if new_price >= 1050 {
+        let drop = (new_price - 1050) / 50;
+        let spend_amount = drop * (15 * ctx.accounts.treasury.amount / 1000); // 1.5% for each $50 increment
+        buy_and_burn_tokens(ctx, spend_amount)?;
+    }
+
     if new_price < 1000 {
         // Calculate how much to burn based on the price drop
         let drop = (1000 - new_price) / 50;
@@ -39,3 +45,7 @@ pub fn burn_treasury_tokens(ctx: Context<OracleIntegration>, amount: u64) -> Res
     Ok(())
 }
 
+fn buy_and_burn_tokens(ctx: Context<OracleIntegration>, amount: u64) -> Result<()> {
+    // Implement logic to buy back tokens from the market and burn them
+    Ok(())
+}
