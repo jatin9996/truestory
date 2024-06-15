@@ -1,12 +1,15 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, Burn};
+use anchor_spl::token::{self, Burn, Transfer};
 
 #[derive(Accounts)]
 pub struct OracleIntegration {
     pub oracle: Account<'info, OracleAccount>,
     #[account(mut)]
     pub treasury: Account<'info, TokenAccount>, // Ensure this account is included and properly initialized
+    #[account(mut)]
+    pub market_reserve: Account<'info, TokenAccount>, // Market reserve account for buying tokens
     pub burn_authority: Signer<'info>, // This account must have the authority to burn tokens
+    pub token_program: Program<'info, token::Token>,
 }
 
 pub fn update_oracle(ctx: Context<OracleIntegration>, new_price: u64) -> Result<()> {
@@ -46,6 +49,25 @@ pub fn burn_treasury_tokens(ctx: Context<OracleIntegration>, amount: u64) -> Res
 }
 
 fn buy_and_burn_tokens(ctx: Context<OracleIntegration>, amount: u64) -> Result<()> {
-    // Implement logic to buy back tokens from the market and burn them
+    // Transfer tokens from market reserve to treasury
+    let transfer_cpi_accounts = Transfer {
+        from: ctx.accounts.market_reserve.to_account_info(),
+        to: ctx.accounts.treasury.to_account_info(),
+        authority: ctx.accounts.market_reserve.to_account_info(),
+    };
+    let transfer_cpi_program = ctx.accounts.token_program.to_account_info();
+    let transfer_cpi_ctx = CpiContext::new(transfer_cpi_program, transfer_cpi_accounts);
+    token::transfer(transfer_cpi_ctx, amount)?;
+
+    // Burn tokens from the treasury
+    let burn_cpi_accounts = Burn {
+        mint: ctx.accounts.treasury.to_account_info(),
+        from: ctx.accounts.treasury.to_account_info(),
+        authority: ctx.accounts.burn_authority.to_account_info(),
+    };
+    let burn_cpi_program = ctx.accounts.token_program.to_account_info();
+    let burn_cpi_ctx = CpiContext::new(burn_cpi_program, burn_cpi_accounts);
+    token::burn(burn_cpi_ctx, amount)?;
+
     Ok(())
 }
