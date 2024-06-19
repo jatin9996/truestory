@@ -13,6 +13,14 @@ pub struct BurnFromTreasury {
 }
 
 pub fn burn_treasury_tokens(ctx: Context<BurnFromTreasury>, amount: u64) -> Result<()> {
+    if amount > ctx.accounts.treasury.amount {
+        return Err(error!(ErrorCode::InsufficientFunds));
+    }
+
+    if ctx.accounts.meme_token_state.total_supply < amount {
+        return Err(error!(ErrorCode::Underflow));
+    }
+
     let cpi_accounts = Burn {
         mint: ctx.accounts.mint.to_account_info(),
         from: ctx.accounts.treasury.to_account_info(),

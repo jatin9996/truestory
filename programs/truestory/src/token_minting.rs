@@ -21,13 +21,25 @@ pub struct MintTokens {
     pub to_advisors: Account<'info, TokenAccount>,
 }
 
+#[error_code]
+pub enum ErrorCode {
+    #[msg("Overflow occurred during mint calculation.")]
+    Overflow,
+    #[msg("Max supply exceeded during mint calculation.")]
+    MaxSupplyExceeded,
+}
+
 pub fn mint_tokens(ctx: Context<MintTokens>, base_amount: u64) -> Result<()> {
     let meme_token_state = &mut ctx.accounts.meme_token_state;
     let oracle = &ctx.accounts.oracle;
     let increments = (oracle.price - 200) / 5;
     let additional_mint = (increments * meme_token_state.max_supply) / 100; // 1% for each $5 increment
 
-    let total_mint = base_amount + additional_mint;
+    let total_mint = base_amount.checked_add(additional_mint).ok_or(error!(ErrorCode::Overflow))?;
+    if meme_token_state.total_supply + total_mint > meme_token_state.max_supply {
+        return Err(error!(ErrorCode::MaxSupplyExceeded));
+    }
+
     distribute_tokens(ctx, total_mint)?;
     Ok(())
 }

@@ -13,6 +13,10 @@ pub struct OracleIntegration {
 }
 
 pub fn update_oracle(ctx: Context<OracleIntegration>, new_price: u64) -> Result<()> {
+    if new_price < MIN_PRICE || new_price > MAX_PRICE {
+        return Err(error!(ErrorCode::PriceOutOfRange));
+    }
+
     let oracle = &mut ctx.accounts.oracle;
     oracle.price = new_price;
 

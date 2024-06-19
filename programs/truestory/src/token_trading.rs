@@ -16,18 +16,41 @@ pub struct BuyTokens {
     pub meme_token_state: Account<'info, MemeTokenState>,
 }
 
-pub fn buy_tokens(ctx: Context<BuyTokens>, amount: u64) -> Result<()> {
-    // Transfer SOL from buyer to treasury
-    let transfer_sol_cpi_accounts = Transfer {
-        from: ctx.accounts.buyer.to_account_info(),
-        to: ctx.accounts.treasury.to_account_info(),
-        authority: ctx.accounts.buyer.to_account_info(),
-    };
-    let transfer_sol_cpi_program = ctx.accounts.system_program.to_account_info();
-    let transfer_sol_cpi_ctx = CpiContext::new(transfer_sol_cpi_program, transfer_sol_cpi_accounts);
-    anchor_spl::token::transfer(transfer_sol_cpi_ctx, amount)?;
+#[error_code]
+pub enum ErrorCode {
+    #[msg("Failed to transfer funds.")]
+    TransferFailed,
+    #[msg("Failed to mint tokens.")]
+    MintFailed,
+    #[msg("Failed to burn tokens.")]
+    BurnFailed,
+    #[msg("Failed to transfer tax to treasury.")]
+    TaxTransferFailed,
+    #[msg("Overflow occurred during calculation.")]
+    Overflow,
+    #[msg("Already initialized.")]
+    AlreadyInitialized,
+    #[msg("Underflow occurred during calculation.")]
+    Underflow,
+    #[msg("Insufficient balance for rewards.")]
+    InsufficientBalance,
+    #[msg("Unauthorized attempt to sell tokens.")]
+    Unauthorized,
+}
 
-    // Mint tokens to buyer's account
+pub fn buy_tokens(ctx: Context<BuyTokens>, amount: u64) -> Result<()> {
+    let transfer_result = anchor_spl::token::transfer(
+        CpiContext::new(
+            ctx.accounts.system_program.to_account_info(),
+            Transfer {
+                from: ctx.accounts.buyer.to_account_info(),
+                to: ctx.accounts.treasury.to_account_info(),
+                authority: ctx.accounts.buyer.to_account_info(),
+            }
+        ),
+        amount
+    ).map_err(|_| error!(ErrorCode::TransferFailed))?;
+
     let mint_cpi_accounts = MintTo {
         mint: ctx.accounts.mint.to_account_info(),
         to: ctx.accounts.buyer_token_account.to_account_info(),
@@ -37,10 +60,9 @@ pub fn buy_tokens(ctx: Context<BuyTokens>, amount: u64) -> Result<()> {
     let seeds = &[b"treasury".as_ref(), &[ctx.accounts.treasury.bump]];
     let signer = &[&seeds[..]];
     let mint_cpi_ctx = CpiContext::new_with_signer(mint_cpi_program, mint_cpi_accounts, signer);
-    token::mint_to(mint_cpi_ctx, amount)?;
+    token::mint_to(mint_cpi_ctx, amount).map_err(|_| error!(ErrorCode::MintFailed))?;
 
-    // Update circulating supply
-    ctx.accounts.meme_token_state.circulating_supply += amount;
+    ctx.accounts.meme_token_state.circulating_supply = ctx.accounts.meme_token_state.circulating_supply.checked_add(amount).ok_or(error!(ErrorCode::Overflow))?;
 
     Ok(())
 }
@@ -61,33 +83,40 @@ pub struct SellTokens {
 }
 
 pub fn sell_tokens(ctx: Context<SellTokens>, amount: u64) -> Result<()> {
-    // Burn tokens from the seller's token account
-    let cpi_accounts = Burn {
+    require!(ctx.accounts.seller.to_account_info().is_signer, ErrorCode::Unauthorized);
+
+    // Prevent reentrancy by marking the state as in-progress
+    ctx.accounts.meme_token_state.in_progress = true;
+
+    let current_time = Clock::get()?.unix_timestamp;
+    let elapsed_hours = (current_time - ctx.accounts.meme_token_state.launch_time) / 3600;
+    let tax_rate = if elapsed_hours < 100 { 100 - elapsed_hours } else { 0 };
+    let tax_amount = amount * tax_rate / 100;
+    let net_amount = amount.checked_sub(tax_amount).ok_or(ErrorCode::Underflow)?;
+
+    let burn_cpi_accounts = Burn {
         mint: ctx.accounts.mint.to_account_info(),
         to: ctx.accounts.seller_token_account.to_account_info(),
         authority: ctx.accounts.seller.to_account_info(),
     };
-    let cpi_program = ctx.accounts.token_program.to_account_info();
-    let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
-    token::burn(cpi_ctx, amount)?;
+    let burn_cpi_program = ctx.accounts.token_program.to_account_info();
+    let burn_cpi_ctx = CpiContext::new(burn_cpi_program, burn_cpi_accounts);
+    token::burn(burn_cpi_ctx, net_amount).map_err(|_| error!(ErrorCode::BurnFailed))?;
 
-    // Transfer SOL from the treasury to the seller
-    let seeds = &[
-        b"treasury".as_ref(),
-        &[ctx.accounts.treasury.bump],
-    ];
-    let signer = &[&seeds[..]];
-    let cpi_accounts = Transfer {
-        from: ctx.accounts.treasury.to_account_info(),
-        to: ctx.accounts.seller.to_account_info(),
-        authority: ctx.accounts.treasury.to_account_info(), 
+    let transfer_cpi_accounts = Transfer {
+        from: ctx.accounts.seller_token_account.to_account_info(),
+        to: ctx.accounts.treasury.to_account_info(),
+        authority: ctx.accounts.seller.to_account_info(),
     };
-    let cpi_program = ctx.accounts.system_program.to_account_info();
-    let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer);
-    anchor_spl::token::transfer(cpi_ctx, amount)?;
+    let transfer_cpi_program = ctx.accounts.token_program.to_account_info();
+    let transfer_cpi_ctx = CpiContext::new(transfer_cpi_program, transfer_cpi_accounts);
+    anchor_spl::token::transfer(transfer_cpi_ctx, tax_amount).map_err(|_| error!(ErrorCode::TaxTransferFailed))?;
 
     // Update circulating supply
-    ctx.accounts.meme_token_state.circulating_supply -= amount;
+    ctx.accounts.meme_token_state.circulating_supply = ctx.accounts.meme_token_state.circulating_supply.checked_sub(amount).ok_or(ErrorCode::Underflow)?;
+
+    // Mark the operation as complete
+    ctx.accounts.meme_token_state.in_progress = false;
 
     Ok(())
 }
