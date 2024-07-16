@@ -1,5 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Burn, Transfer};
+use chainlink_solana::ChainlinkFeed; // Add this line
 
 #[derive(Accounts)]
 pub struct OracleIntegration {
@@ -10,9 +11,12 @@ pub struct OracleIntegration {
     pub market_reserve: Account<'info, TokenAccount>, // Market reserve account for buying tokens
     pub burn_authority: Signer<'info>, // This account must have the authority to burn tokens
     pub token_program: Program<'info, token::Token>,
+    pub chainlink_feed: Account<'info, ChainlinkFeed>, // Add this line
 }
 
-pub fn update_oracle(ctx: Context<OracleIntegration>, new_price: u64) -> Result<()> {
+pub fn update_oracle(ctx: Context<OracleIntegration>) -> Result<()> {
+    let new_price = ctx.accounts.chainlink_feed.get_price()?; // Fetch price from Chainlink
+
     if new_price < MIN_PRICE || new_price > MAX_PRICE {
         return Err(error!(ErrorCode::PriceOutOfRange));
     }
@@ -21,15 +25,15 @@ pub fn update_oracle(ctx: Context<OracleIntegration>, new_price: u64) -> Result<
     oracle.price = new_price;
 
     if new_price >= 1050 {
-        let drop = (new_price - 1050) / 50;
-        let spend_amount = drop * (15 * ctx.accounts.treasury.amount / 1000); // 1.5% for each $50 increment
+        let drop = (new_price - 1050) / 5; // Changed from 50 to 5
+        let spend_amount = drop * (15 * ctx.accounts.treasury.amount / 1000); // 1.5% for each $5 increment
         buy_and_burn_tokens(ctx, spend_amount)?;
     }
 
     if new_price < 1000 {
         // Calculate how much to burn based on the price drop
-        let drop = (1000 - new_price) / 50;
-        let burn_amount = drop * (2 * oracle.treasury_supply / 100); // 2% of treasury for each $50 drop
+        let drop = (1000 - new_price) / 5; // Changed from 50 to 5
+        let burn_amount = drop * (2 * oracle.treasury_supply / 100); // 2% of treasury for each $5 drop
 
         // Call burn function here
         burn_treasury_tokens(ctx, burn_amount)?;

@@ -1,5 +1,6 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, Mint, TokenAccount, Transfer};
+use anchor_spl::token::{self, Mint, TokenAccount, Transfer, Burn};
+use chainlink_solana::ChainlinkFeed; // Add this line
 
 #[derive(Accounts)]
 pub struct BuyTokens {
@@ -14,6 +15,7 @@ pub struct BuyTokens {
     pub token_program: Program<'info, Token>,
     #[account(mut)]
     pub meme_token_state: Account<'info, MemeTokenState>,
+    pub chainlink_feed: Account<'info, ChainlinkFeed>, // Add this line
 }
 
 #[error_code]
@@ -80,6 +82,7 @@ pub struct SellTokens {
     pub token_program: Program<'info, Token>,
     #[account(mut)]
     pub meme_token_state: Account<'info, MemeTokenState>,
+    pub chainlink_feed: Account<'info, ChainlinkFeed>, // Add this line
 }
 
 pub fn sell_tokens(ctx: Context<SellTokens>, amount: u64) -> Result<()> {

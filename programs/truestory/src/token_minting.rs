@@ -1,5 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Mint, TokenAccount, MintTo};
+use chainlink_solana::ChainlinkFeed; // Add this line
 
 #[derive(Accounts)]
 pub struct MintTokens {
@@ -19,6 +20,7 @@ pub struct MintTokens {
     pub to_marketing: Account<'info, TokenAccount>,
     #[account(mut)]
     pub to_advisors: Account<'info, TokenAccount>,
+    pub chainlink_feed: Account<'info, ChainlinkFeed>, // Add this line
 }
 
 #[error_code]
@@ -32,7 +34,7 @@ pub enum ErrorCode {
 pub fn mint_tokens(ctx: Context<MintTokens>, base_amount: u64) -> Result<()> {
     let meme_token_state = &mut ctx.accounts.meme_token_state;
     let oracle = &ctx.accounts.oracle;
-    let increments = (oracle.price - 200) / 5;
+    let increments = (oracle.price - 200) / 5; // Changed from 50 to 5
     let additional_mint = (increments * meme_token_state.max_supply) / 100; // 1% for each $5 increment
 
     let total_mint = base_amount.checked_add(additional_mint).ok_or(error!(ErrorCode::Overflow))?;
