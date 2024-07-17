@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, Mint, TokenAccount, Transfer, Burn};
-use chainlink_solana::state::ChainlinkFeed;
+use anchor_spl::token::{self, Mint, TokenAccount, Transfer, Burn, MintTo, Token}; // Import Token
+use crate::chainlink_feed::ChainlinkFeed; // Updated import path
+use crate::initialization::MemeTokenState; // Import MemeTokenState from the correct module
 
 #[derive(Accounts)]
 pub struct BuyTokens<'info> {

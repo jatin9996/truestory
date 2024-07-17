@@ -1,4 +1,5 @@
 use anchor_lang::prelude::*;
+use anchor_spl::token::Mint; // Added this line
 
 #[derive(Accounts)]
 pub struct Initialize<'info> {

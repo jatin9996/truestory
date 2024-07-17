@@ -1,6 +1,8 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Mint, TokenAccount, MintTo};
-use chainlink_solana::state::ChainlinkFeed; // Correct the import path
+use crate::chainlink_feed::ChainlinkFeed; // Updated import path
+use crate::oracle::OracleAccount;
+use crate::initialization::MemeTokenState;
 
 #[derive(Accounts)]
 pub struct MintTokens<'info> {
@@ -21,6 +23,7 @@ pub struct MintTokens<'info> {
     #[account(mut)]
     pub to_advisors: Account<'info, TokenAccount>,
     pub chainlink_feed: Account<'info, ChainlinkFeed>, // Add this line
+    pub token_program: Program<'info, token::Token>, // Add this line
 }
 
 #[error_code]

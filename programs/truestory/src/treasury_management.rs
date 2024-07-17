@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Burn, TokenAccount, Mint};
-use chainlink_solana::state::ChainlinkFeed; // Corrected import path
+use crate::chainlink_feed::ChainlinkFeed; // Updated import path
+use crate::initialization::MemeTokenState; // Import MemeTokenState from the correct module
 
 #[derive(Accounts)]
 pub struct BurnFromTreasury<'info> {
@@ -10,6 +11,7 @@ pub struct BurnFromTreasury<'info> {
     pub mint: Account<'info, Mint>, // Mint account of the token
     pub authority: Signer<'info>,
     pub token_program: Program<'info, token::Token>, // Include the token program
+    #[account(mut)]
     pub meme_token_state: Account<'info, MemeTokenState>,
     pub chainlink_feed: Account<'info, ChainlinkFeed>,
 }

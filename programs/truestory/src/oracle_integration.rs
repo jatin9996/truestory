@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, Burn, Transfer};
-use chainlink_solana::state::ChainlinkFeed; // Correct the import path
+use anchor_spl::token::{self, Burn, Transfer, TokenAccount};
+use crate::chainlink_feed::ChainlinkFeed; // Updated import path
+use crate::oracle::OracleAccount; // Import OracleAccount from the correct module
 
 #[derive(Accounts)]
 pub struct OracleIntegration<'info> {
@@ -13,6 +14,9 @@ pub struct OracleIntegration<'info> {
     pub token_program: Program<'info, token::Token>,
     pub chainlink_feed: Account<'info, ChainlinkFeed>,
 }
+
+const MIN_PRICE: u64 = 100; // Define this constant
+const MAX_PRICE: u64 = 2000; // Define this constant
 
 pub fn update_oracle(ctx: Context<OracleIntegration>) -> Result<()> {
     let new_price = ctx.accounts.chainlink_feed.get_price()?; // Fetch price from Chainlink
