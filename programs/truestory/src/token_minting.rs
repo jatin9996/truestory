@@ -17,7 +17,7 @@ pub struct MintTokens {
     #[account(mut)]
     pub to_treasury: Account<'info, TokenAccount>,
     #[account(mut)]
-    pub to_marketing: Account<'info, TokenAccount>,
+    pub to_community: Account<'info, TokenAccount>, // Add this line
     #[account(mut)]
     pub to_advisors: Account<'info, TokenAccount>,
     pub chainlink_feed: Account<'info, ChainlinkFeed>, // Add this line
@@ -47,20 +47,19 @@ pub fn mint_tokens(ctx: Context<MintTokens>, base_amount: u64) -> Result<()> {
 }
 
 fn distribute_tokens(ctx: Context<MintTokens>, amount: u64) -> Result<()> {
-    let treasury_amount = (amount * 375) / 1000;
-    let marketing_amount = (amount * 125) / 1000;
-    let airdrop_amount = (amount * 125) / 1000;
-    let advisors_amount = (amount * 125) / 1000;
-    let team_amount = (amount * 125) / 1000;
-    let circulating_amount = (amount * 125) / 1000;
+    let treasury_amount = (amount * 400) / 1000; // 40%
+    let community_amount = (amount * 300) / 1000; // 30%
+    let airdrop_amount = (amount * 100) / 1000; // 10%
+    let advisors_amount = (amount * 100) / 1000; // 10%
+    let team_amount = (amount * 100) / 1000; // 10%
 
     token::mint_to(ctx.accounts.to_treasury.to_account_info(), treasury_amount)?;
-    token::mint_to(ctx.accounts.to_marketing.to_account_info(), marketing_amount)?;
+    token::mint_to(ctx.accounts.to_community.to_account_info(), community_amount)?;
     token::mint_to(ctx.accounts.to_airdrops.to_account_info(), airdrop_amount)?;
     token::mint_to(ctx.accounts.to_advisors.to_account_info(), advisors_amount)?;
     token::mint_to(ctx.accounts.to_team.to_account_info(), team_amount)?;
 
     ctx.accounts.meme_token_state.total_supply += amount;
-    ctx.accounts.meme_token_state.circulating_supply += circulating_amount;
+    ctx.accounts.meme_token_state.circulating_supply += amount;
     Ok(())
 }

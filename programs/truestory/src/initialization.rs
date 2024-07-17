@@ -19,16 +19,17 @@ pub struct MemeTokenState {
     pub initialized: bool,
 }
 
-pub fn initialize(ctx: Context<Initialize>, max_supply: u64, total_supply: u64, circulating_supply: u64, decimals: u8) -> Result<()> {
+pub fn initialize(ctx: Context<Initialize>, decimals: u8) -> Result<()> {
     if ctx.accounts.meme_token_state.initialized {
         return Err(error!(ErrorCode::AlreadyInitialized));
     }
     ctx.accounts.meme_token_state.initialized = true;
 
     let meme_token_state = &mut ctx.accounts.meme_token_state;
-    meme_token_state.max_supply = 3125174400000; // Maximum supply: 3,125,174,400,000
-    meme_token_state.total_supply = 3125174400000; // Total supply: 3,125,174,400,000
-    meme_token_state.circulating_supply = 625034880000; // Circulating supply: 625,034,880,000
+    meme_token_state.max_supply = 2998944000000; // Maximum supply: 2,998,944,000,000
+    meme_token_state.total_supply = 2998944000000; // Total supply: 2,998,944,000,000
+    meme_token_state.circulating_supply = 599788800000; // Initial launch supply: 599,788,800,000 (20%)
+    meme_token_state.launch_time = Clock::get()?.unix_timestamp; // Set launch time
     ctx.accounts.mint.decimals = decimals;
     Ok(())
 }
