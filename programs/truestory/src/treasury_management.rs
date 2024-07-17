@@ -1,9 +1,9 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Burn, TokenAccount, Mint};
-use chainlink_solana::ChainlinkFeed;
+use chainlink_solana::state::ChainlinkFeed; // Corrected import path
 
 #[derive(Accounts)]
-pub struct BurnFromTreasury {
+pub struct BurnFromTreasury<'info> {
     #[account(mut)]
     pub treasury: Account<'info, TokenAccount>,
     #[account(mut)]

@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Burn, Transfer};
-use chainlink_solana::ChainlinkFeed;
+use chainlink_solana::state::ChainlinkFeed; // Correct the import path
 
 #[derive(Accounts)]
 pub struct OracleIntegration<'info> {

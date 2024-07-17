@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Mint, TokenAccount, Transfer, Burn};
-use chainlink_solana::ChainlinkFeed;
+use chainlink_solana::state::ChainlinkFeed;
 
 #[derive(Accounts)]
 pub struct BuyTokens<'info> {

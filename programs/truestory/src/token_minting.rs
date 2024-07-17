@@ -1,9 +1,9 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Mint, TokenAccount, MintTo};
-use chainlink_solana::ChainlinkFeed; // Add this line
+use chainlink_solana::state::ChainlinkFeed; // Correct the import path
 
 #[derive(Accounts)]
-pub struct MintTokens {
+pub struct MintTokens<'info> {
     #[account(mut)]
     pub meme_token_state: Account<'info, MemeTokenState>,
     #[account(mut)]

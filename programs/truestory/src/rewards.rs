@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, MintTo, TokenAccount};
+use anchor_spl::token::{self, Mint, MintTo, TokenAccount};
 
 #[derive(Accounts)]
 pub struct RewardUsers<'info> {
@@ -7,6 +7,7 @@ pub struct RewardUsers<'info> {
     pub reward_recipient: Account<'info, TokenAccount>,
     pub mint: Account<'info, Mint>,
     pub authority: Signer<'info>,
+    pub token_program: Program<'info, token::Token>, // Added this line
 }
 
 #[error_code]
@@ -16,6 +17,8 @@ pub enum ErrorCode {
     #[msg("Reward limit exceeded.")]
     RewardLimitExceeded,
 }
+
+const MAX_REWARD_LIMIT: u64 = 1000; // Defined this constant
 
 pub fn reward_users(ctx: Context<RewardUsers>, amount: u64) -> Result<()> {
     if amount > MAX_REWARD_LIMIT {
@@ -40,7 +43,7 @@ pub fn reward_users(ctx: Context<RewardUsers>, amount: u64) -> Result<()> {
 }
 
 // Function to check if rewards can be issued
-fn can_issue_rewards(amount: u64) -> bool {
+fn can_issue_rewards(_amount: u64) -> bool {
     // Implement your logic to check if rewards can be issued
     true
 }
