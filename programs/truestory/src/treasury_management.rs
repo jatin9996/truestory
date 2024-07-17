@@ -16,6 +16,15 @@ pub struct BurnFromTreasury<'info> {
     pub chainlink_feed: Account<'info, ChainlinkFeed>,
 }
 
+#[error_code]
+pub enum ErrorCode {
+    #[msg("Insufficient funds in the treasury.")]
+    InsufficientFunds,
+    #[msg("Underflow occurred during calculation.")]
+    Underflow,
+    // other error codes...
+}
+
 pub fn burn_treasury_tokens(ctx: Context<BurnFromTreasury>, amount: u64) -> Result<()> {
     if amount > ctx.accounts.treasury.amount {
         return Err(error!(ErrorCode::InsufficientFunds));

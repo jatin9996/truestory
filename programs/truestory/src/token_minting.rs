@@ -56,11 +56,57 @@ fn distribute_tokens(ctx: Context<MintTokens>, amount: u64) -> Result<()> {
     let advisors_amount = (amount * 100) / 1000; // 10%
     let team_amount = (amount * 100) / 1000; // 10%
 
-    token::mint_to(ctx.accounts.to_treasury.to_account_info(), treasury_amount)?;
-    token::mint_to(ctx.accounts.to_community.to_account_info(), community_amount)?;
-    token::mint_to(ctx.accounts.to_airdrops.to_account_info(), airdrop_amount)?;
-    token::mint_to(ctx.accounts.to_advisors.to_account_info(), advisors_amount)?;
-    token::mint_to(ctx.accounts.to_team.to_account_info(), team_amount)?;
+    let cpi_program = ctx.accounts.token_program.to_account_info();
+
+    let mint_to_treasury_ctx = CpiContext::new(
+        cpi_program.clone(),
+        MintTo {
+            mint: ctx.accounts.mint.to_account_info(),
+            to: ctx.accounts.to_treasury.to_account_info(),
+            authority: ctx.accounts.meme_token_state.to_account_info(),
+        },
+    );
+    token::mint_to(mint_to_treasury_ctx, treasury_amount)?;
+
+    let mint_to_community_ctx = CpiContext::new(
+        cpi_program.clone(),
+        MintTo {
+            mint: ctx.accounts.mint.to_account_info(),
+            to: ctx.accounts.to_community.to_account_info(),
+            authority: ctx.accounts.meme_token_state.to_account_info(),
+        },
+    );
+    token::mint_to(mint_to_community_ctx, community_amount)?;
+
+    let mint_to_airdrops_ctx = CpiContext::new(
+        cpi_program.clone(),
+        MintTo {
+            mint: ctx.accounts.mint.to_account_info(),
+            to: ctx.accounts.to_airdrops.to_account_info(),
+            authority: ctx.accounts.meme_token_state.to_account_info(),
+        },
+    );
+    token::mint_to(mint_to_airdrops_ctx, airdrop_amount)?;
+
+    let mint_to_advisors_ctx = CpiContext::new(
+        cpi_program.clone(),
+        MintTo {
+            mint: ctx.accounts.mint.to_account_info(),
+            to: ctx.accounts.to_advisors.to_account_info(),
+            authority: ctx.accounts.meme_token_state.to_account_info(),
+        },
+    );
+    token::mint_to(mint_to_advisors_ctx, advisors_amount)?;
+
+    let mint_to_team_ctx = CpiContext::new(
+        cpi_program,
+        MintTo {
+            mint: ctx.accounts.mint.to_account_info(),
+            to: ctx.accounts.to_team.to_account_info(),
+            authority: ctx.accounts.meme_token_state.to_account_info(),
+        },
+    );
+    token::mint_to(mint_to_team_ctx, team_amount)?;
 
     ctx.accounts.meme_token_state.total_supply += amount;
     ctx.accounts.meme_token_state.circulating_supply += amount;

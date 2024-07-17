@@ -18,6 +18,13 @@ pub struct OracleIntegration<'info> {
 const MIN_PRICE: u64 = 100; // Define this constant
 const MAX_PRICE: u64 = 2000; // Define this constant
 
+#[error_code]
+pub enum ErrorCode {
+    #[msg("Price is out of the acceptable range.")]
+    PriceOutOfRange,
+    // other error codes...
+}
+
 pub fn update_oracle(ctx: Context<OracleIntegration>) -> Result<()> {
     let new_price = ctx.accounts.chainlink_feed.get_price()?; // Fetch price from Chainlink
 
@@ -31,7 +38,7 @@ pub fn update_oracle(ctx: Context<OracleIntegration>) -> Result<()> {
     if new_price >= 1050 {
         let drop = (new_price - 1050) / 5; // Changed from 50 to 5
         let spend_amount = drop * (15 * ctx.accounts.treasury.amount / 1000); // 1.5% for each $5 increment
-        buy_and_burn_tokens(ctx, spend_amount)?;
+        buy_and_burn_tokens(&ctx, spend_amount)?; // Pass reference to ctx
     }
 
     if new_price < 1000 {
@@ -40,14 +47,14 @@ pub fn update_oracle(ctx: Context<OracleIntegration>) -> Result<()> {
         let burn_amount = drop * (2 * oracle.treasury_supply / 100); // 2% of treasury for each $5 drop
 
         // Call burn function here
-        burn_treasury_tokens(ctx, burn_amount)?;
+        burn_treasury_tokens(&ctx, burn_amount)?; // Pass reference to ctx
     }
 
     Ok(())
 }
 
 // Function to burn tokens from the treasury
-pub fn burn_treasury_tokens(ctx: Context<OracleIntegration>, amount: u64) -> Result<()> {
+pub fn burn_treasury_tokens(ctx: &Context<OracleIntegration>, amount: u64) -> Result<()> {
     let cpi_accounts = Burn {
         mint: ctx.accounts.treasury.to_account_info(),
         from: ctx.accounts.treasury.to_account_info(),
@@ -60,7 +67,7 @@ pub fn burn_treasury_tokens(ctx: Context<OracleIntegration>, amount: u64) -> Res
     Ok(())
 }
 
-fn buy_and_burn_tokens(ctx: Context<OracleIntegration>, amount: u64) -> Result<()> {
+fn buy_and_burn_tokens(ctx: &Context<OracleIntegration>, amount: u64) -> Result<()> {
     // Transfer tokens from market reserve to treasury
     let transfer_cpi_accounts = Transfer {
         from: ctx.accounts.market_reserve.to_account_info(),

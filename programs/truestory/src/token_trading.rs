@@ -66,13 +66,16 @@ pub fn buy_tokens(ctx: Context<BuyTokens>, amount: u64) -> Result<()> {
         final_amount
     ).map_err(|_| error!(ErrorCode::TransferFailed))?;
 
+    // Derive the PDA for the treasury account
+    let (treasury_pda, treasury_bump) = Pubkey::find_program_address(&[b"treasury"], ctx.program_id);
+
     let mint_cpi_accounts = MintTo {
         mint: ctx.accounts.mint.to_account_info(),
         to: ctx.accounts.buyer_token_account.to_account_info(),
         authority: ctx.accounts.treasury.to_account_info(),
     };
     let mint_cpi_program = ctx.accounts.token_program.to_account_info();
-    let seeds = &[b"treasury".as_ref(), &[ctx.accounts.treasury.bump]];
+    let seeds = &[b"treasury".as_ref(), &[treasury_bump]];
     let signer = &[&seeds[..]];
     let mint_cpi_ctx = CpiContext::new_with_signer(mint_cpi_program, mint_cpi_accounts, signer);
     token::mint_to(mint_cpi_ctx, final_amount).map_err(|_| error!(ErrorCode::MintFailed))?;
@@ -106,7 +109,7 @@ pub fn sell_tokens(ctx: Context<SellTokens>, amount: u64) -> Result<()> {
 
     let current_time = Clock::get()?.unix_timestamp; 
     let elapsed_hours = (current_time - ctx.accounts.meme_token_state.launch_time) / 3600;
-    let tax_rate = if elapsed_hours < 24 { 5 } else { 100 - elapsed_hours };
+    let tax_rate = if elapsed_hours < 24 { 5 } else { 100 - elapsed_hours as u64 };
     let tax_amount = amount * tax_rate / 100;
     let net_amount = amount.checked_sub(tax_amount).ok_or(ErrorCode::Underflow)?;
 
@@ -116,7 +119,7 @@ pub fn sell_tokens(ctx: Context<SellTokens>, amount: u64) -> Result<()> {
 
     let burn_cpi_accounts = Burn {
         mint: ctx.accounts.mint.to_account_info(),
-        to: ctx.accounts.seller_token_account.to_account_info(),
+        from: ctx.accounts.seller_token_account.to_account_info(), // Corrected field
         authority: ctx.accounts.seller.to_account_info(),
     };
     let burn_cpi_program = ctx.accounts.token_program.to_account_info();
