@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Burn, TokenAccount, Mint};
-use chainlink_solana::ChainlinkFeed; // Add this line
+use chainlink_solana::ChainlinkFeed;
 
 #[derive(Accounts)]
 pub struct BurnFromTreasury {
@@ -11,7 +11,7 @@ pub struct BurnFromTreasury {
     pub authority: Signer<'info>,
     pub token_program: Program<'info, token::Token>, // Include the token program
     pub meme_token_state: Account<'info, MemeTokenState>,
-    pub chainlink_feed: Account<'info, ChainlinkFeed>, // Add this line
+    pub chainlink_feed: Account<'info, ChainlinkFeed>,
 }
 
 pub fn burn_treasury_tokens(ctx: Context<BurnFromTreasury>, amount: u64) -> Result<()> {

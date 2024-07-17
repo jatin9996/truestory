@@ -1,9 +1,9 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Burn, Transfer};
-use chainlink_solana::ChainlinkFeed; // Add this line
+use chainlink_solana::ChainlinkFeed;
 
 #[derive(Accounts)]
-pub struct OracleIntegration {
+pub struct OracleIntegration<'info> {
     pub oracle: Account<'info, OracleAccount>,
     #[account(mut)]
     pub treasury: Account<'info, TokenAccount>, // Ensure this account is included and properly initialized
@@ -11,7 +11,7 @@ pub struct OracleIntegration {
     pub market_reserve: Account<'info, TokenAccount>, // Market reserve account for buying tokens
     pub burn_authority: Signer<'info>, // This account must have the authority to burn tokens
     pub token_program: Program<'info, token::Token>,
-    pub chainlink_feed: Account<'info, ChainlinkFeed>, // Add this line
+    pub chainlink_feed: Account<'info, ChainlinkFeed>,
 }
 
 pub fn update_oracle(ctx: Context<OracleIntegration>) -> Result<()> {

@@ -1,9 +1,9 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Mint, TokenAccount, Transfer, Burn};
-use chainlink_solana::ChainlinkFeed; // Add this line
+use chainlink_solana::ChainlinkFeed;
 
 #[derive(Accounts)]
-pub struct BuyTokens {
+pub struct BuyTokens<'info> {
     #[account(mut)]
     pub buyer: Signer<'info>,
     #[account(mut)]
@@ -15,7 +15,7 @@ pub struct BuyTokens {
     pub token_program: Program<'info, Token>,
     #[account(mut)]
     pub meme_token_state: Account<'info, MemeTokenState>,
-    pub chainlink_feed: Account<'info, ChainlinkFeed>, // Add this line
+    pub chainlink_feed: Account<'info, ChainlinkFeed>,
 }
 
 #[error_code]
@@ -39,7 +39,7 @@ pub enum ErrorCode {
     #[msg("Unauthorized attempt to sell tokens.")]
     Unauthorized,
     #[msg("Purchase exceeds maximum allowed per wallet.")]
-    PurchaseExceedsLimit, // Add this line
+    PurchaseExceedsLimit,
 }
 
 pub fn buy_tokens(ctx: Context<BuyTokens>, amount: u64) -> Result<()> {
@@ -82,7 +82,7 @@ pub fn buy_tokens(ctx: Context<BuyTokens>, amount: u64) -> Result<()> {
 }
 
 #[derive(Accounts)]
-pub struct SellTokens {
+pub struct SellTokens<'info> {
     #[account(mut)]
     pub seller: Signer<'info>,
     #[account(mut)]
@@ -94,7 +94,7 @@ pub struct SellTokens {
     pub token_program: Program<'info, Token>,
     #[account(mut)]
     pub meme_token_state: Account<'info, MemeTokenState>,
-    pub chainlink_feed: Account<'info, ChainlinkFeed>, // Add this line
+    pub chainlink_feed: Account<'info, ChainlinkFeed>,
 }
 
 pub fn sell_tokens(ctx: Context<SellTokens>, amount: u64) -> Result<()> {

@@ -8,11 +8,11 @@ pub mod token_trading;
 pub mod rewards;       
 
 use initialization::{initialize, MemeTokenState};
-use token_minting::{mint_tokens, distribute_tokens};
-use oracle_integration::{update_oracle, buy_and_burn_tokens};
+use token_minting::mint_tokens;
+use oracle_integration::update_oracle;
 use treasury_management::burn_treasury_tokens;
 use token_trading::{buy_tokens, sell_tokens};  
-use rewards::*;        
+use rewards::reward_users;        
 
 declare_id!("3dupjHU543SdKpSkdTyPSbPLAowgTPRT15jG2rJd9fD1");
 

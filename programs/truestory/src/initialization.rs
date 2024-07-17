@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
-pub struct Initialize {
+pub struct Initialize<'info> {
     #[account(init, payer = admin, space = 8 + 48)]
     pub meme_token_state: Account<'info, MemeTokenState>,
     #[account(mut)]
