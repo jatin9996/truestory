@@ -28,14 +28,9 @@ pub fn process_instruction(
     let mint_amount = calculate_mint_amount(current_price, base_price, price_increment);
     if mint_amount > 0 {
         msg!("Minting {} tokens due to price increase", mint_amount);
-        // Implement the actual minting logic here
+        // Call to distribute tokens
+        crate::instructions::distribute_tokens::distribute_minted_tokens(accounts, mint_amount)?;
     }
-
-    // Limit wallet purchases (anti-whale)
-    use crate::instructions::utils::limit_wallet_purchase;
-    use crate::tokenomics::{calculate_mint_amount, MAX_ALLOWED_PURCHASE};
-
-    limit_wallet_purchase(mint_account, MAX_ALLOWED_PURCHASE)?;
 
     Ok(())
 }
