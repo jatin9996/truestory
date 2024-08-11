@@ -29,7 +29,7 @@ use services::treasury_burn::burn_based_on_sol_price;
 
 #[program]
 pub mod truestory_meme {
-    use super::*;
+    use super::*;c
 
     // Use the imported functions and structs in the program macro
     pub use initialization::initialize;
