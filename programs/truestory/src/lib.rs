@@ -1,13 +1,10 @@
 use anchor_lang::prelude::*;
 
 // Declare all modules that contain instruction handlers or relevant functionality
-
-pub mod chainlink_feed; // Ensure this line is present to declare the chainlink_feed module
-pub mod instructions; // Assuming you have a separate module for handling different instructions
-pub mod burn_tokens; // Include the new burn_tokens module
+pub mod initialization; // Added this line to declare the initialization module
 pub mod distribution; // New module for token distribution logic
 pub mod tax; // New module for dynamic tax rate logic
-pub mod treasury_burn; // New module for treasury burn logic
+
 pub mod raydium_integration; // Include the new Raydium integration module
 
 // Import necessary structs and functions from the modules
@@ -36,9 +33,9 @@ pub mod truestory_meme {
 
     // Use the imported functions and structs in the program macro
     pub use initialization::initialize;
-    pub use token_minting::mint_tokens;
+    pub use mint_tokens::mint_tokens;
     pub use oracle_integration::update_oracle;
-    pub use treasury_management::burn_treasury_tokens;
+    pub use treasury_burns::burn_treasury_tokens;
     pub use token_trading::{buy_tokens, sell_tokens};
     pub use rewards::reward_users;
     pub use instructions::{transfer_tokens, instructions_mint_tokens, mint_tokens_based_on_price, transfer}; // Use the instruction handlers
