@@ -3025,6 +3025,7 @@ dependencies = [
  "reqwest",
  "serde",
  "serde_json",
+ "solana-program",
 ]
 
 [[package]]
