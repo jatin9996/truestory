@@ -49,10 +49,9 @@ pub fn limit_wallet_purchase(
 ) -> ProgramResult {
     // Check if the purchase exceeds the max_allowed
     if purchaser.lamports.borrow() > max_allowed {
-        return Err(ProgramError::Custom(1));
+        // If it does, throw an error
+        return Err(ProgramError::Custom(1)); // Custom error code, replace '1' with your specific error identifier
     }
-
-    // If it does, throw an error
 
     Ok(())
 }

@@ -1,6 +1,7 @@
 import { Connection, PublicKey, TransactionInstruction, Transaction } from '@solana/web3.js';
 import { Program, AnchorProvider, web3, utils } from '@coral-xyz/anchor';
 import { Truestory } from '../../target/types/truestory';
+import { BN } from 'bn.js';
 
 export class TruestoryClient {
     private program: Program<Truestory>;
