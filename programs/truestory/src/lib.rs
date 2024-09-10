@@ -4,8 +4,10 @@ use anchor_lang::prelude::*;
 pub mod initialization; // Added this line to declare the initialization module
 pub mod distribution; // New module for token distribution logic
 pub mod tax; // New module for dynamic tax rate logic
-
 pub mod raydium_integration; // Include the new Raydium integration module
+pub mod services {
+    pub mod treasury_burn;
+}
 
 // Import necessary structs and functions from the modules
 use initialization::{initialize, MemeTokenState};
@@ -18,38 +20,54 @@ use distribution::{distribute_tokens}; // Import distribute_tokens function from
 use tax::{calculate_tax_rate}; // Import calculate_tax_rate function from tax module
 use treasury_burn::{burn_treasury_tokens}; // Import burn_treasury_tokens function from treasury_burn module
 use raydium_integration::*; // Import functions from the Raydium integration module
+use services::treasury_burn::burn_based_on_sol_price;
 
 declare_id!("3dupjHU543SdKpSkdTyPSbPLAowgTPRT15jG2rJd9fD1");
 
-pub mod services {
-    pub mod treasury_burn;
-}
-
-use services::treasury_burn::burn_based_on_sol_price;
+// Correct placement of pub use statements outside of the #[program] macro
+pub use initialization::initialize;
+pub use mint_tokens::mint_tokens;
+pub use oracle_integration::update_oracle;
 
 #[program]
 pub mod truestory_meme {
-    use super::*;c
+    use super::*;
 
-    // Use the imported functions and structs in the program macro
-    pub use initialization::initialize;
-    pub use mint_tokens::mint_tokens;
-    pub use oracle_integration::update_oracle;
-    pub use treasury_burns::burn_treasury_tokens;
-    pub use token_trading::{buy_tokens, sell_tokens};
-    pub use rewards::reward_users;
-    pub use instructions::{transfer_tokens, instructions_mint_tokens, mint_tokens_based_on_price, transfer}; // Use the instruction handlers
-    pub use burn_tokens::burn_tokens_based_on_price; // Use the new function
-
-    pub fn execute_mint_and_distribute(ctx: Context<MintAdditionalSupply>, mint_amount: u64) -> Result<()> {
-        let (team_share, airdrop_share, treasury_share) = distribute_tokens(mint_amount);
-        // Logic to mint and distribute to respective wallets
-        Ok(())
+    pub fn entry(ctx: Context<Dispatch>, instruction: Instruction) -> Result<()> {
+        match instruction {
+            Instruction::MintAndDistribute { mint_amount } => {
+                execute_mint_and_distribute(ctx, mint_amount)
+            },
+            Instruction::Burn { sol_price } => {
+                execute_burn(ctx, sol_price)
+            }
+        }
     }
+}
 
-    pub fn execute_burn(ctx: Context<BurnFromTreasury>, sol_price: f64) -> Result<()> {
-        let treasury_amount = ctx.accounts.treasury.amount;
-        let burn_amount = burn_treasury_tokens(sol_price, treasury_amount);
-        burn_based_on_sol_price(ctx, sol_price, burn_amount)
+#[derive(AnchorSerialize, AnchorDeserialize)]
+pub enum Instruction {
+    MintAndDistribute { mint_amount: u64 },
+    Burn { sol_price: f64 },
+}
+
+impl From<&[u8]> for Instruction {
+    fn from(slice: &[u8]) -> Self {
+        // Implement conversion from slice to Instruction
     }
+}
+
+// Implement the specific instruction handlers as private functions
+fn execute_mint_and_distribute(ctx: Context<MintAdditionalSupply>, mint_amount: u64) -> Result<()> {
+    let (team_share, airdrop_share, treasury_share) = distribute_tokens(mint_amount);
+    mint_tokens(ctx.accounts.team_wallet, team_share)?;
+    mint_tokens(ctx.accounts.airdrop_wallet, airdrop_share)?;
+    mint_tokens(ctx.accounts.treasury_wallet, treasury_share)?;
+    Ok(())
+}
+
+fn execute_burn(ctx: Context<BurnFromTreasury>, sol_price: f64) -> Result<()> {
+    let treasury_amount = ctx.accounts.treasury.amount;
+    let burn_amount = burn_treasury_tokens(sol_price, treasury_amount);
+    burn_based_on_sol_price(ctx, sol_price, burn_amount)
 }
