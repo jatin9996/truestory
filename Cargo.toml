@@ -1,6 +1,8 @@
 [workspace]
+resolver = "2"
 members = [
-    "programs/*"
+    "programs/truestory",
+    ".",
 ]
 
 [profile.release]
@@ -11,4 +13,11 @@ codegen-units = 1
 opt-level = 3
 incremental = false
 codegen-units = 1
+
+[patch.crates-io]
+zeroize = { version = "1.3.0" }
+
+[dependencies]
+hyper-rustls = "0.27.3"
+
 

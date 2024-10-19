@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, TokenAccount, Mint};
 use solana_program::pubkey::Pubkey;
+use crate::raydium_constants::*;
 
 #[derive(Accounts)]
 pub struct RaydiumPool<'info> {
@@ -9,7 +10,10 @@ pub struct RaydiumPool<'info> {
     #[account(mut)]
     pub sol_token_account: Account<'info, TokenAccount>,
     pub pool_program: Program<'info, Token>,
+    #[account(seeds = [tsm_token_account.key().as_ref()], bump)]
     pub pool_authority: Signer<'info>,
+    // Add this line to store the bump seed
+    pub pool_authority_bump: u8,
 }
 
 pub fn create_liquidity_pool(ctx: Context<RaydiumPool>, initial_tsm: u64, initial_sol: u64) -> Result<()> {
@@ -84,9 +88,8 @@ pub fn swap_tokens(ctx: Context<RaydiumPool>, amount: u64, from_token: Pubkey, t
 }
 
 pub fn fetch_price_data() -> Result<f64> {
-    // Fetch price data from Raydium pool
-    // Assuming there's a function in the Raydium SDK to fetch price data
-    let price = raydium_sdk::get_pool_price().map_err(|e| e.into())?;
+    // Assuming there's a function in the Raydium SDK to fetch price data from the Oracle
+    let price = raydium_sdk::get_pool_price(STANDARD_AMM_ID).map_err(|e| e.into())?;
     Ok(price)
 }
 
