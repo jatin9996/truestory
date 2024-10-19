@@ -1,0 +1,23 @@
+[workspace]
+resolver = "2"
+members = [
+    "programs/truestory",
+    ".",
+]
+
+[profile.release]
+overflow-checks = true
+lto = "fat"
+codegen-units = 1
+[profile.release.build-override]
+opt-level = 3
+incremental = false
+codegen-units = 1
+
+[patch.crates-io]
+zeroize = { version = "1.3.0" }
+
+[dependencies]
+hyper-rustls = "0.27.3"
+
+
